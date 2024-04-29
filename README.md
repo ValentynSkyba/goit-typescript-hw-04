@@ -1,101 +1,141 @@
 Завдання 1
-Клас Student, який містить три властивості: name, age та grade. Замість того, щоб оголошувати ці властивості в тілі класу, потім у конструкторі, і нарешті надавати їм значення, напишіть скорочену ініціалізацію.
+У вас є компонент React, який використовує useRef та IntersectionObserver для визначення, коли користувач переглядає кінець вмісту. Ваше завдання полягає в наступному:
 
-class Student {
-public name: string;
-public age: number;
-public grade: string;
+Встановіть правильні типи пропсів для цього компонента. У ньому є дві властивості: children і onContentEndVisible. children - це будь-який валідний React вузол, а onContentEndVisible - це функція без аргументів, що повертає void.
 
-constructor(name: string, age: number, grade: string) {
-this.name = name;
-this.age = age;
-this.grade = grade;
-}
+Встановіть правильний тип useRef. Посилання endContentRef використовується для div, який міститься в кінці вмісту.
+
+Встановіть правильний тип для options (клас також може бути типом для options).
+
+import React, { useEffect, useRef } from "react";
+
+// Опишіть Props
+export function Observer({ children, onContentEndVisible }: Props) {
+// Вкажіть правильний тип для useRef зверніть увагу, в який DOM елемент ми його передаємо
+const endContentRef = useRef(null);
+
+useEffect(() => {
+// Вкажіть правильний тип для options, підказка, клас також можна вказувати як тип
+const options = {
+rootMargin: "0px",
+threshold: 1.0,
+root: null,
+};
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.intersectionRatio > 0) {
+          onContentEndVisible();
+          observer.disconnect();
+        }
+      });
+    }, options);
+
+    if (endContentRef.current) {
+      observer.observe(endContentRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+
+}, [onContentEndVisible]);
+
+return (
+<div>
+{children}
+<div ref={endContentRef} />
+</div>
+);
 }
 Завдання 2
-Ваше завдання полягатиме у створенні двох класів – Employee та Manager.
+Ваше завдання – додати типи для наступних елементів коду:
 
-Клас Employee повинен включати:
+RequestStep: Це рядковий літерал.
 
-властивість name, яка буде доступна всім. властивість department, яка буде доступна лише всередині класу Employee. salary, яке буде доступне лише всередині класу Employee та його підкласів.
+State: Цей тип являє собою об'єкт з двома властивостями isRequestInProgress і RequestStep
 
-Клас Manager повинен бути підклас класу Employee
+Action: Це тип, що представляє можливі дії, які можуть бути відправлені до редюсера.
 
-Необхідно реалізувати в класі Manager конструктор, який викликатиме конструктор суперкласу та збільшуватиме salary на 10000.
+Дивіться код і опишіть для нього правильні типи.
 
-class Employee {
-// Заповніть модифікатори доступу
-name: string;
-department: string;
-salary: number;
+import React, { useReducer } from "react";
 
-constructor(name: string, department: string, salary: number) {
-this.name = name;
-this.department = department;
-this.salary = salary;
+const initialState: State = {
+isRequestInProgress: false,
+requestStep: "idle",
+};
+
+function requestReducer(state: State, action: Action): State {
+switch (action.type) {
+case "START_REQUEST":
+return { ...state, isRequestInProgress: true, requestStep: "start" };
+case "PENDING_REQUEST":
+return { ...state, isRequestInProgress: true, requestStep: "pending" };
+case "FINISH_REQUEST":
+return { ...state, isRequestInProgress: false, requestStep: "finished" };
+case "RESET_REQUEST":
+return { ...state, isRequestInProgress: false, requestStep: "idle" };
+default:
+return state;
+}
 }
 
-getEmployeeDetails() {
-return `Name: ${this.name}, Department: ${this.department}, Salary: ${this.salary}`;
-}
+export function RequestComponent() {
+const [requestState, requestDispatch] = useReducer(
+requestReducer,
+initialState
+);
+
+const startRequest = () => {
+requestDispatch({ type: "START_REQUEST" });
+// Імітуємо запит до сервера
+setTimeout(() => {
+requestDispatch({ type: "PENDING_REQUEST" });
+// Імітуємо отримання відповіді від сервера
+setTimeout(() => {
+requestDispatch({ type: "FINISH_REQUEST" });
+}, 2000);
+}, 2000);
+};
+
+const resetRequest = () => {
+requestDispatch({ type: "RESET_REQUEST" });
+};
+
+return (
+<div>
+<button onClick={startRequest}>Почати запит</button>
+<button onClick={resetRequest}>Скинути запит</button>
+<p>Стан запиту: {requestState.requestStep}</p>
+</div>
+);
 }
 
-class Manager extends Employee {
-// Реалізуйте конструктор та збільшіть salary на 10000
-}
+export default RequestComponent;
 Завдання 3
-Ви створюєте гру, де є персонажі з різними ролями. Зараз ви працюєте над класом Wizard, який має реалізовувати два інтерфейси - ICharacter та ISpellCaster.
+Ви створюєте компонент форми у React. Ви маєте поле введення, в якому ви хочете відстежити зміни. Для цього ви використовуєте обробник подій onChange. Ваше завдання – правильно типізувати подію, яка передається у цю функцію.
 
-Визначте інтерфейси ICharacter та ISpellCaster так, щоб вони відповідали вимогам класу Wizard. Інтерфейс ICharacter повинен включати властивості name і level, і навіть метод introduce і levelUp. Інтерфейс ISpellCaster повинен включати метод castSpell.
+import React, { useState } from "react";
 
-// реалізація класу Wizard
-class Wizard implements ICharacter, ISpellCaster {
-constructor(public name: string, public level: number) {
-if (this.level < 1) {
-throw new Error('Level too low');
+export function FormComponent() {
+const [value, setValue] = useState("");
+
+const handleChange = (event) => {
+setValue(event.target.value);
+};
+
+return <input type="text" value={value} onChange={handleChange} />;
 }
-}
+Завдання 4
+Ви вирішили застосувати до меню контекст і тепер вам потрібно його типізувати.
 
-introduce(phrase: string): void {
-console.log(phrase + ', ' + this.name);
-}
+Описати тип SelectedMenu: Це має бути об'єкт, який містить id з типом MenuIds
 
-castSpell(): void {
-console.log('Casting a spell, behold my power!');
-}
+Описати тип MenuSelected: Цей тип є об'єктом, що містить selectedMenu
 
-levelUp(): void {
-this.level++;
-console.log(`Level up! New level is ${this.level}`);
-}
-}
+Описати тип MenuAction: Цей тип являє собою об'єкт з методом onSelectedMenu, який приймає об'єкт типу SelectedMenu як аргумент повертає void.
 
-// тестування класу
-const wizard = new Wizard('Merlin', 15);
+Описати тип PropsProvider: Опишіть правильний тип для дітей
 
-wizard.introduce('I am the mighty wizard');
-wizard.castSpell();
-wizard.levelUp(); // Level up! New level is 16
-Завдання 4 \*
-У цьому завдання вам належить реалізувати сценарій життя, де людина, ключ і будинок взаємодіють один з одним.
-
-Ключ (Key): Створіть клас Key. У нього має бути одна приватна властивість signature, яка генерується випадково при створенні об'єкта цього класу (наприклад Math.random()). Також цей клас повинен мати метод getSignature, який повертає значення властивості signature.
-
-Людина (Person): Створіть клас Person. Конструктор цього класу приймає об'єкт класу Key і зберігає їх у приватному властивості key. Клас Person повинен мати метод getKey, який повертає збережений ключ.
-
-Дім (House): Створіть абстрактний клас House. Цей клас має дві властивості: door, яка може бути відкрита (true), або закрита (false), і key, яка зберігає об'єкт класу Key. У цьому класі також повинен бути метод comeIn, який додає об'єкт класу Person у масив tenants, якщо door відкрита. Ваш абстрактний клас House також повинен мати абстрактний метод OpenDoor, який приймає об'єкт класу Key.
-
-Мій будинок (MyHouse): Створіть клас MyHouse, який успадковується від абстрактного класу House. Реалізуйте метод openDoor у цьому класі. Якщо ключ, переданий цьому методу, збігається з ключем, збереженим як key, то двері відчиняються.
-
-Після реалізації всіх класів створіть об'єкти для кожного класу та спробуйте відтворити сценарій, в якому людина приходить додому.
-
-Наприклад, ось так:
-
-const key = new Key();
-
-const house = new MyHouse(key);
-const person = new Person(key);
-
-house.openDoor(person.getKey());
-
-house.comeIn(person);
+Описати тип PropsMenu: Опишіть тип для menus, він має бути від типу Menu
